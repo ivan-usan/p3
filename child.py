@@ -21,7 +21,14 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         self.self_tasks = [self.check_mouvement]
     
     def detect_mouvement(self):
-        pass
+        get_values() 
+        def set_range (values): 
+            if accelerometer.set_range (8):
+                accelerometer.is_gesture ("freefall") 
+            elif acceleromater.set_range(4):
+                accelerometer.is_gesture ("shake")
+            else :
+                accelerometer. is_gesture("face down") 
 
     def notify_mouvement(self):
         pass
