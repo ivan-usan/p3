@@ -83,8 +83,8 @@ class Child_MicroBit_Client(Micro:Bit_Client):
         Envoie le niveau de lait actuel au parent.
         Ce message pourrait être envoyé via Bluetooth ou une autre méthode de communication.
         """
-        message = f"3|{len(str(self.milk_level))}|{self.milk_level}"
-        self.send_message(message)
+        message = f"{self.milk_level}"
+        self.send_message("3", message)
 
     def give_milk(self):
         """
