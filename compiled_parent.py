@@ -26,7 +26,7 @@ class Micro_Bit_Client:
     def add_received_task(self):
         message_type, message_data = self.radio_client.get_message()
 
-        if message_type:
+        if message_type and message_type != 1:
             func = self.message_types[message_type]
             func_with_args = (func, message_data)
     
@@ -175,7 +175,7 @@ class RadioClient:
                 self.nonce_set.add(int(nonce))
                 self.nonce = int(nonce)+1
     
-            return message_type, message_data
+            return int(message_type), message_data
         except:
             return None, None
 
@@ -246,7 +246,6 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
         super().__init__()
 
         self.message_types = {
-
         }
     
     def show_detected_mouvement(self):

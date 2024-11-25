@@ -139,7 +139,7 @@ class RadioClient:
         elif self.state_connection == 'connecting':
             message_type, message_data = self.get_message()
 
-            if message_type == str(0x02):
+            if message_type == 0x02:
                 display.show(Image.DIAMOND)
 
                 new_challenge = random.random()
@@ -164,7 +164,7 @@ class RadioClient:
 
             message_type, message_data = self.get_message()
 
-            if message_type == str(0x01):
+            if message_type == 0x01:
                 display.show(Image.DIAMOND)
 
                 challenge = float(message_data)

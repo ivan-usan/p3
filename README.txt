@@ -10,5 +10,3 @@ def any_menu():
     else:
         show_menu_actions
         add menu again in stack
-
-bronval
