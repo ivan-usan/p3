@@ -32,13 +32,13 @@ class Micro_Bit_Client:
     
             self.stack.append(func_with_args)
 
-    def check_self_tasks(self):
+    def check_tasks(self):
         for task in self.tasks:
-            task(self)
+            task()
 
     def update_stack(self):
         self.add_received_task()
-        self.check_self_tasks()
+        self.check_tasks()
 
     def update(self):
         self.update_stack()

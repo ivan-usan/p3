@@ -3,6 +3,7 @@ from microbit import *
 import random
 import radio
 
+radio.config(group=244, channel=44, address=0x11111122)
 radio.on()
 password = 'monolisa'
 
@@ -106,30 +107,33 @@ class RadioClient:
         """
         Returns: message type and message data
         """
-        message = radio.receive()
-
-        if not message:
+        try:
+            message = radio.receive()
+    
+            if not message:
+                return None, None
+    
+            message_type, message_length, message_data = message.split('|')
+            message_data = vigenere(message_data, self.password, decryption=True)
+    
+            nonce, message_data = message_data.split(':')
+    
+            if nonce in self.nonce_set:
+                return None, None
+            else:
+                self.nonce_set.add(int(nonce))
+                self.nonce = int(nonce)+1
+    
+            return message_type, message_data
+        except:
             return None, None
-
-        message_type, message_length, message_data = message.split('|')
-        message_data = vigenere(message_data, self.password, decryption=True)
-
-        nonce, message_data = message_data.split(':')
-
-        if nonce in self.nonce_set:
-            return None, None
-        else:
-            self.nonce_set.add(int(nonce))
-            self.nonce = int(nonce)+1
-
-        return message_type, message_data
 
     def set_up_challenge(self, challenge_seed):
         random.seed(int(challenge_seed*10**7))
 
     def connect_to_parent(self):
         if self.state_connection == 'connected':
-            display.show('-', loop=True)
+            display.show('-')
             return True
 
         elif self.state_connection == 'connecting':
@@ -146,18 +150,17 @@ class RadioClient:
                     self.password = self.password + str(new_challenge)
                     self.state_connection = 'connected'
             else:
-                display.show('...')
+                display.show('.')
 
                 self.send_message(str(0x01), str(self.challenge))
-                self.state_connection = 'connecting'
 
     def connect_to_child(self):
         if self.state_connection == 'connected':
-            display.show('-', loop=True)
+            display.show('-')
             return True
 
         elif self.state_connection == 'connecting':
-            display.show('...')
+            display.show('.')
 
             message_type, message_data = self.get_message()
 

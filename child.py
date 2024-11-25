@@ -13,13 +13,16 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         self.prev_mouvement = None
         self.milk_level = 0  # Quantité de lait initiale
         # Liste des tâches à exécuter pour cet agent
-        self.self_tasks = [self.check_mouvement, self.show_milk]
+
+        self.tasks = [self.check_mouvement, ]#self.show_milk]
 
     def detect_mouvement(self):
         """
         Détecte les mouvements de l'enfant en utilisant l'accéléromètre.
         Retourne un état de mouvement : "endormi", "agité", ou "très agité".
         """
+        display.show(Image.DIAMOND)
+        sleep(10000)
         if accelerometer.set_range(8):
             accelerometer.is_gesture("freefall")
             return "très agité"
@@ -34,7 +37,7 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         """
         Notifie le parent en fonction de l'état du mouvement de l'enfant.
         """
-        self.radio_client.send_message(0x02, {})
+        self.radio_client.send_message(0x03, '')
         
     def check_mouvement(self):
         """

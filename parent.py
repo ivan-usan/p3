@@ -17,7 +17,6 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
         super().__init__()
 
         self.message_types = {
-
         }
     
     def show_detected_mouvement(self):
