@@ -124,7 +124,7 @@ class RadioClient:
                 self.nonce_set.add(int(nonce))
                 self.nonce = int(nonce)+1
     
-            return message_type, message_data
+            return int(message_type), message_data
         except:
             return None, None
 
