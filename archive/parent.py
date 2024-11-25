@@ -1,5 +1,4 @@
 from common.micro_bit import Micro_Bit_Client
-import time
 
 class Parent_Micro_Bit_Client(Micro_Bit_Client):
 
@@ -30,8 +29,9 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
         pass
 
     def run(self):
-        while not self.radio_client.connect_to_child():
-            sleep(100)
+        is_connected = self.radio_client.connect_to_parent()
+        while not is_connected:
+            is_connected = self.radio_client.connect_to_parent()
 
         super().run()
 

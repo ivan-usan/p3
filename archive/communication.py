@@ -1,30 +1,36 @@
-from microbit import *
+messages_types = [
+    # key - :int in hex format of max size 32 bytes:
+    # value - :function 
+    0x01 # connection method    
+]
 
-import random
 import radio
 
 radio.on()
-password = 'monolisa'
+
+import json
+
+import random
 
 # seed to put random.seed(:int)
 def hashing(string):
 	"""
-	Hachage d'une chaÃ®ne de caractÃ¨res fournie en paramÃ¨tre.
-	Le rÃ©sultat est une chaÃ®ne de caractÃ¨res.
+	Hachage d'une chaîne de caractères fournie en paramètre.
+	Le résultat est une chaîne de caractères.
 	Attention : cette technique de hachage n'est pas suffisante (hachage dit cryptographique) pour une utilisation en dehors du cours.
 
-	:param (str) string: la chaÃ®ne de caractÃ¨res Ã  hacher
-	:return (str): le rÃ©sultat du hachage
+	:param (str) string: la chaîne de caractères à hacher
+	:return (str): le résultat du hachage
 	"""
 
 	def to_32(value):
 		"""
-		Fonction interne utilisÃ©e par hashing.
-		Convertit une valeur en un entier signÃ© de 32 bits.
-		Si 'value' est un entier plus grand que 2 ** 31, il sera tronquÃ©.
+		Fonction interne utilisée par hashing.
+		Convertit une valeur en un entier signé de 32 bits.
+		Si 'value' est un entier plus grand que 2 ** 31, il sera tronqué.
 
-		:param (int) value: valeur du caractÃ¨re transformÃ© par la valeur de hachage de cette itÃ©ration
-		:return (int): entier signÃ© de 32 bits reprÃ©sentant 'value'
+		:param (int) value: valeur du caractère transformé par la valeur de hachage de cette itération
+		:return (int): entier signé de 32 bits représentant 'value'
 		"""
 		value = value % (2 ** 32)
 		if value >= 2**31:
@@ -74,17 +80,15 @@ def vigenere(message, key, decryption=False):
 
 class RadioClient:
 
+    state_connection = 'searching'
     nonce = 1
 
     def __init__(self):
-        self.state_connection = 'connecting' # connected
+        self.state_connection = 'connecting' # waiting, connected
         self.nonce_set = set()
 
-        self.password = password
-
-        self.challenge = random.random() # in case of child
-        self.set_up_challenge(self.challenge)
-    
+        with open('common/password.txt') as f:
+            self.password = f.read()
 
     def send_message(self, message_type, message_data):
         """
@@ -92,15 +96,13 @@ class RadioClient:
             message_type - :str, represents message's type
             message_data - :str, represents message data
         """
-
-        message_data = str(self.nonce) + ':' + message_data
+        message_data = f'{self.nonce}:{message_data}'
         message_data = vigenere(message_data, self.password)
 
         self.nonce_set.add(self.nonce)
         self.nonce += 1
 
-        message = '|'.join([str(message_type), str(len(message_data)), message_data])
-        radio.send(message)
+        radio.send(f'{message_type}|{len(message_data)}|{message_data}')
 
     def get_message(self):
         """
@@ -125,50 +127,41 @@ class RadioClient:
         return message_type, message_data
 
     def set_up_challenge(self, challenge_seed):
-        random.seed(int(challenge_seed*10**7))
+        random.seed(challenge_seed)
 
     def connect_to_parent(self):
         if self.state_connection == 'connected':
-            display.show('-', loop=True)
             return True
-
         elif self.state_connection == 'connecting':
-            message_type, message_data = self.get_message()
+            new_challenge = random.random()
+            challenge_hash = hashing(str(new_challenge))
 
-            if message_type == str(0x02):
-                display.show(Image.DIAMOND)
+            message_type, calculated_hash = self.get_message()
 
-                new_challenge = random.random()
-                challenge_hash = hashing(str(new_challenge))
+            if calculated_hash == challenge_hash:
+                self.password = self.password + str(new_challenge)
+                self.state_connection = 'connected'
 
-                if message_data == challenge_hash:
-    
-                    self.password = self.password + str(new_challenge)
-                    self.state_connection = 'connected'
-            else:
-                display.show('...')
+        elif self.state_connection == 'searching':
+            challenge = random.random()
+            self.set_up_challenge(challenge)
 
-                self.send_message(str(0x01), str(self.challenge))
-                self.state_connection = 'connecting'
+            self.send_message(str(0x01), f'{challenge}')
+            self.state_connection = 'connecting'
 
     def connect_to_child(self):
         if self.state_connection == 'connected':
-            display.show('-', loop=True)
             return True
-
-        elif self.state_connection == 'connecting':
-            display.show('...')
-
+        elif self.state_connection == 'searching':
             message_type, message_data = self.get_message()
 
             if message_type == str(0x01):
-                display.show(Image.DIAMOND)
-
-                challenge = float(message_data)
+                nonce,challenge = [int(value) for value in message_data.split(' ')]
                 self.set_up_challenge(challenge)
 
                 new_challenge = random.random()
                 challenge_hash = hashing(str(new_challenge))
 
                 self.send_message(0x02, challenge_hash)
+
                 self.state_connection = 'connected'

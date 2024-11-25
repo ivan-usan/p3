@@ -1,3 +1,54 @@
+
+
+class Stack:
+    """
+    Generates object, that will classify by an importance the tasks
+    """
+
+    def __init__(self):
+        self.stack = []
+
+    def __getitem__(self, i):
+        return self.stack.pop(i)
+
+    def apend(self, item):
+        self.stack.append(item)
+
+class Micro_Bit_Client:
+
+    message_types = {}
+    tasks = []
+
+    def __init__(self):
+        self.stack = []
+        self.radio_client = RadioClient()
+
+    def add_received_task(self):
+        message_type, message_data = self.radio_client.get_message()
+
+        if message_type:
+            func = self.message_types[message_type]
+            func_with_args = (func, message_data)
+    
+            self.stack.append(func_with_args)
+
+    def check_self_tasks(self):
+        for task in self.tasks:
+            task(self)
+
+    def update_stack(self):
+        self.add_received_task()
+        self.check_self_tasks()
+
+    def update(self):
+        self.update_stack()
+        if self.stack:
+            self.stack[-1][0](self.stack[-1][1])
+
+    def run(self):
+        while True:
+            self.update()
+
 from microbit import *
 
 import random
@@ -172,3 +223,43 @@ class RadioClient:
 
                 self.send_message(0x02, challenge_hash)
                 self.state_connection = 'connected'
+
+
+import time
+
+class Parent_Micro_Bit_Client(Micro_Bit_Client):
+
+    """
+    Reactions-Decisions maker agent in 2 of 3 functions to do (lumisinoty, movements)
+    - Notify about events with other agent -> inform about current actions to do (inform straightaway by fast signal)
+    - Giving the possibility to make decision -> wait until decision (create a menu for functions menus)
+
+    Decisions makers agent in 1 of 3 functions - Interface provider
+    - Select actions
+    - Get info about current level
+    """
+
+    def __init__(self):
+        super().__init__()
+
+        self.message_types = {
+
+        }
+    
+    def show_detected_mouvement(self):
+        pass
+
+    def handle_detected_mouvement(self):
+        """
+        changes the current state and 
+        """
+        pass
+
+    def run(self):
+        while not self.radio_client.connect_to_child():
+            sleep(100)
+
+        super().run()
+
+parent_micro_bit = Parent_Micro_Bit_Client()
+parent_micro_bit.run()

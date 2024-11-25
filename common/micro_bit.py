@@ -1,5 +1,4 @@
-from communication import RadioClient
-from functools import partial
+from common.communication import RadioClient
 
 class Stack:
     """
@@ -29,7 +28,7 @@ class Micro_Bit_Client:
 
         if message_type:
             func = self.message_types[message_type]
-            func_with_args = partial(func, **message_data)
+            func_with_args = (func, message_data)
     
             self.stack.append(func_with_args)
 
@@ -44,7 +43,7 @@ class Micro_Bit_Client:
     def update(self):
         self.update_stack()
         if self.stack:
-            self.stack[-1]()
+            self.stack[-1][0](self.stack[-1][1])
 
     def run(self):
         while True:

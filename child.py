@@ -1,19 +1,17 @@
-from micro : bit import Micro:Bit_Client
-from microbit import accelerometer, display, button_a, button_b, music
+from microbit import *
+from common.micro_bit import Micro_Bit_Client
+import time
 
-class Child_MicroBit_Client(Micro:Bit_Client):
+class Child_Micro_Bit_Client(Micro_Bit_Client):
     """
     Cette classe représente un client micro:bit pour l'enfant. Elle gère la détection des mouvements,
     les notifications envoyées au parent, et la gestion de la quantité de lait.
     """
-
     def __init__(self):
         super().__init__()
-
         # Initialisation de l'état précédent du mouvement et du niveau de lait
         self.prev_mouvement = None
         self.milk_level = 0  # Quantité de lait initiale
-
         # Liste des tâches à exécuter pour cet agent
         self.self_tasks = [self.check_mouvement, self.show_milk]
 
@@ -22,19 +20,15 @@ class Child_MicroBit_Client(Micro:Bit_Client):
         Détecte les mouvements de l'enfant en utilisant l'accéléromètre.
         Retourne un état de mouvement : "endormi", "agité", ou "très agité".
         """
-        get_values()
-        def set_ranges (values):
-
-        # Seuils à ajuster selon les besoins pour détecter les mouvements
-            if accelerometer.set_range(8):
-                accelerometer.is_gesture("freefall")
-                return "très agité"
-        
-            elif accelerometer.set_range(4):
-                accelerometer.is_gesture("shake")
-                return "agité"
-            else : 
-                return "endormi"
+        if accelerometer.set_range(8):
+            accelerometer.is_gesture("freefall")
+            return "très agité"
+    
+        elif accelerometer.set_range(4):
+            accelerometer.is_gesture("shake")
+            return "agité"
+        else : 
+            return "endormi"
 
     def notify_mouvement(self, mouvement):
         """
@@ -61,7 +55,6 @@ class Child_MicroBit_Client(Micro:Bit_Client):
             display.show("Z")  # Image représentant le bébé en sommeil
 
     # Fonctions liées à la gestion de la quantité de lait
-
     def show_milk(self):
         """
         Affiche le niveau actuel de lait sur l'écran LED.
@@ -83,8 +76,8 @@ class Child_MicroBit_Client(Micro:Bit_Client):
         Envoie le niveau de lait actuel au parent.
         Ce message pourrait être envoyé via Bluetooth ou une autre méthode de communication.
         """
-        message = f"{self.milk_level}"
-        self.send_message("3", message)
+        message = str(self.milk_level)
+        self.radio_client.send_message("3", message)
 
     def give_milk(self):
         """
@@ -109,6 +102,12 @@ class Child_MicroBit_Client(Micro:Bit_Client):
         self.milk_level = 0
         self.show_milk()
 
+    def run(self):
+        while not self.radio_client.connect_to_parent():
+            sleep(100)
+
+        super().run()
+
 # Création de l'instance du micro:bit enfant
 child_micro_bit = Child_Micro_Bit_Client()
-child_micro:bit.run()  # Lancer l'exécution des tâches
+child_micro_bit.run()  # Lancer l'exécution des tâches
