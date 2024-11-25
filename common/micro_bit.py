@@ -26,7 +26,7 @@ class Micro_Bit_Client:
     def add_received_task(self):
         message_type, message_data = self.radio_client.get_message()
 
-        if message_type and message_type != 1:
+        if message_type and message_type != 1 and message_type in self.message_types:
             func = self.message_types[message_type]
             func_with_args = (func, message_data)
     
