@@ -87,7 +87,7 @@ class RadioClient:
         self.set_up_challenge(self.challenge)
     
 
-    def send_message(self, message_type, message_data):
+    def send_message(self, message_type, message_data=''):
         """
         Args:
             message_type - :str, represents message's type

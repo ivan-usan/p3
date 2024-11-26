@@ -1,19 +1,5 @@
 
 
-class Stack:
-    """
-    Generates object, that will classify by an importance the tasks
-    """
-
-    def __init__(self):
-        self.stack = []
-
-    def __getitem__(self, i):
-        return self.stack.pop(i)
-
-    def apend(self, item):
-        self.stack.append(item)
-
 class Micro_Bit_Client:
 
     message_types = {}
@@ -28,9 +14,11 @@ class Micro_Bit_Client:
 
         if message_type and message_type != 1 and message_type in self.message_types:
             func = self.message_types[message_type]
-            func_with_args = (func, message_data)
     
-            self.stack.append(func_with_args)
+            if not message_data:
+                self.stack.append(func)
+            else:
+                self.stack.append((func, message_data))
 
     def check_tasks(self):
         for task in self.tasks:
@@ -43,7 +31,18 @@ class Micro_Bit_Client:
     def update(self):
         self.update_stack()
         if self.stack:
-            self.stack[-1][0](self.stack[-1][1])
+            task = self.stack[-1]
+
+            if isinstance(self.stack[-1], tuple):
+                self.stack.pop(-1)
+
+                task[0](task[1])
+
+            else:
+                is_continue = task() # only menus can return True
+                if not is_continue:
+                    self.stack.pop(-1)
+                    display.clear()
 
     def run(self):
         while True:
@@ -245,7 +244,10 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
     def __init__(self):
         super().__init__()
 
+        self.curr_luminosity_option = 0
+
         self.message_types = {
+            5: self.handle_luminosity_change
         }
     
     def show_detected_mouvement(self):
@@ -256,6 +258,40 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
         changes the current state and 
         """
         pass
+    
+    def handle_luminosity_change(self, luminosity):
+        if luminosity == 'Day':
+            display.show(Image.ALL_CLOCKS[:7])
+
+        elif luminosity == 'Night':
+            display.show(list(Image.ALL_CLOCKS[6:])+[Image.ALL_CLOCKS[0]])
+
+        self.stack.append(self.luminosity_menu)
+
+    def luminosity_menu(self):
+        if button_a.is_pressed():
+            if self.curr_luminosity_option == 0: # music
+                task = 'music'
+            else: # image
+                task = 'image'
+
+            self.radio_client.send_message(6, task)
+
+            return False
+
+        elif button_b.is_pressed():
+            self.curr_luminosity_option += 1
+            self.curr_luminosity_option = self.curr_luminosity_option % 2
+
+        else:
+            if self.curr_luminosity_option == 0: # music
+                image = Image.MUSIC_QUAVER
+            else: # image
+                image = Image.GHOST
+
+            display.show(image)
+
+        return True
 
     def run(self):
         while not self.radio_client.connect_to_child():

@@ -15,7 +15,7 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         self.luminosity = self.get_luminosity() # Niveau de luminosité dans la pièce
         # Liste des tâches à exécuter pour cet agent
 
-        self.tasks = [self.check_mouvement, self.check_luminosity, ]#self.show_milk]
+        self.tasks = [self.check_luminosity, ]#self.show_milk]
 
     def detect_mouvement(self):
         """
@@ -38,7 +38,7 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         """
         Notifie le parent en fonction de l'état du mouvement de l'enfant.
         """
-        self.radio_client.send_message(0x03, '')
+        self.radio_client.send_message(0x03)
         
     def check_mouvement(self):
         """
@@ -112,18 +112,18 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         Vérifie si la luminosité de la pièce a changé et notifie le parent.
         """
         if self.get_luminosity() != self.luminosity:
-            if self.luminosity == "Day"
+            if self.luminosity == "Day":
                 message = "Night"
                 self.radio_client.send_message("5", message)
                 self.luminosity = "Night"
             elif self.luminosity == "Night":
-                message = "Night"
+                message = "Day"
                 self.radio_client.send_message("5", message)
                 self.luminosity = "Night"
         
     def get_luminosity(self):
         luminosity = display.read_light_level()
-        if luminosity > 50:
+        if luminosity > 2:
             return "Day"
         else:
             return "Night"

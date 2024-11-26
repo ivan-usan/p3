@@ -1,19 +1,5 @@
 from common.communication import RadioClient
 
-class Stack:
-    """
-    Generates object, that will classify by an importance the tasks
-    """
-
-    def __init__(self):
-        self.stack = []
-
-    def __getitem__(self, i):
-        return self.stack.pop(i)
-
-    def apend(self, item):
-        self.stack.append(item)
-
 class Micro_Bit_Client:
 
     message_types = {}
@@ -28,9 +14,11 @@ class Micro_Bit_Client:
 
         if message_type and message_type != 1 and message_type in self.message_types:
             func = self.message_types[message_type]
-            func_with_args = (func, message_data)
     
-            self.stack.append(func_with_args)
+            if not message_data:
+                self.stack.append(func)
+            else:
+                self.stack.append((func, message_data))
 
     def check_tasks(self):
         for task in self.tasks:
@@ -43,7 +31,18 @@ class Micro_Bit_Client:
     def update(self):
         self.update_stack()
         if self.stack:
-            self.stack[-1][0](self.stack[-1][1])
+            task = self.stack[-1]
+
+            if isinstance(self.stack[-1], tuple):
+                self.stack.pop(-1)
+
+                task[0](task[1])
+
+            else:
+                is_continue = task() # only menus can return True
+                if not is_continue:
+                    self.stack.pop(-1)
+                    display.clear()
 
     def run(self):
         while True:
