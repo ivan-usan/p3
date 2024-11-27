@@ -24,14 +24,18 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         Retourne un état de mouvement : "endormi", "agité", ou "très agité".
         """
         display.show(Image.DIAMOND)
-        sleep(10000)
-        if accelerometer.set_range(8):
-            accelerometer.is_gesture("freefall")
+        sleep(1000)
+        x = accelerometer.get_x()
+        y = accelerometer.get_y()
+        z = accelerometer.get_z()
+        
+        distance = math.sqrt((x)**2+(y)**2+(z)**2)
+        if distance => 10  :
             return "très agité"
     
-        elif accelerometer.set_range(4):
-            accelerometer.is_gesture("shake")
+        elif distance < 10 and distance => 5 :
             return "agité"
+        
         else : 
             return "endormi"
 
