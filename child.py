@@ -140,7 +140,7 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         sum = 0
         degree = 0
         for i in range(len(self.stage)):
-            sum += slef.stage[i]
+            sum += self.stage[i]
         degree = sum / 5
         l = []
         for j in range(1, len(self.stage)):
