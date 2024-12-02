@@ -64,7 +64,37 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
             display.show(image)
 
         return True
+        
+    def handle_mouvement_change(self, mouvement):
+        if mouvement == 'agité':
+            display.show(Image.SURPRISED)
 
+        elif luminosity == 'très agité':
+            display.show(Image.ANGRY)
+
+        self.stack.append(self.mouvement_menu)
+    
+    def mouvement_menu(self):
+        if button_a.is_pressed():
+            if self.curr_mouvement == 0: # music
+                task = 'music'
+            self.radio_client.send_message(6, task)
+
+            return False
+
+        elif button_b.is_pressed():
+            self.curr_mouvement_option += 1
+            self.curr_mouvement_option = self.curr_mouvement_option % 2
+
+        else:
+            if self.curr_mouvement_option == 0: # music
+                image = Image.DUCK
+            else: # image
+                image = Image.BUTTERFLY
+
+            display.show(image)
+
+        return True
     def run(self):
         while not self.radio_client.connect_to_child():
             sleep(100)
