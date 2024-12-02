@@ -1,6 +1,7 @@
 from microbit import *
 from common.micro_bit import Micro_Bit_Client
 import time
+import math
 
 class Child_Micro_Bit_Client(Micro_Bit_Client):
     """
