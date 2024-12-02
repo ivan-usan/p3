@@ -24,17 +24,15 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         Détecte les mouvements de l'enfant en utilisant l'accéléromètre.
         Retourne un état de mouvement : "endormi", "agité", ou "très agité".
         """
-        display.show(Image.DIAMOND)
-        sleep(1000)
         x = accelerometer.get_x()
         y = accelerometer.get_y()
         z = accelerometer.get_z()
         
         distance = math.sqrt((x)**2+(y)**2+(z)**2)
-        if distance => 10  :
+        if distance >= 1000  :
             return "très agité"
     
-        elif distance < 10 and distance => 5 :
+        elif distance < 1000 and distance >= 500 :
             return "agité"
         
         else : 
