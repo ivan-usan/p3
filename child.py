@@ -152,7 +152,37 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
             sleep(100)
 
         super().run()
-
-# Création de l'instance du micro:bit enfant
-child_micro_bit = Child_Micro_Bit_Client()
-child_micro_bit.run()  # Lancer l'exécution des tâches
+        
+        Initialiser le radio pour la communication
+    radio.on()
+    radio.config(channel=19)
+    
+    Variables pour suivre l'état d'éveil
+    etat_eveil = "Endormi"
+    
+    def envoyer_message(message):
+        """Envoie un message via le radio"""
+        radio.send(message)
+    
+    while True:
+        # Lire les mouvements du nourrisson (accéléromètre)
+        mouvement = accelerometer.get_x()  # Vous pouvez aussi utiliser get_y() ou get_z() en fonction des besoins
+    
+        if mouvement > 200:  # Très agité
+            etat_eveil = "Très agité"
+        elif mouvement > 50:  # Agité
+            etat_eveil = "Agité"
+        else:  # Endormi
+            etat_eveil = "Endormi"
+    
+    Afficher l'état d'éveil
+        display.scroll(etat_eveil)
+    
+        # Envoyer l'état d'éveil au parent
+        envoyer_message("État d'éveil: " + etat_eveil)
+    
+        sleep(1000)  # Attendre avant de lire à nouveau
+    
+    # Création de l'instance du micro:bit enfant
+    child_micro_bit = Child_Micro_Bit_Client()
+    child_micro_bit.run()  # Lancer l'exécution des tâches
