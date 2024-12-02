@@ -358,6 +358,8 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         else:
             return "Night"
         
+        
+        
     def run(self):
         while not self.radio_client.connect_to_parent():
             sleep(100)

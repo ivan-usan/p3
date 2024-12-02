@@ -12,7 +12,7 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         # Initialisation de l'état précédent du mouvement et du niveau de lait
         self.prev_mouvement = None
         self.milk_level = 0 # Quantité de lait initiale
-        self.luminosity = self.get_luminosity() # Niveau de luminosité dans la pièce
+        self.luminosity = " " # Niveau de luminosité dans la pièce
         self.stage = []
         # Liste des tâches à exécuter pour cet agent
 
@@ -116,7 +116,13 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         """
         Vérifie si la luminosité de la pièce a changé et notifie le parent.
         """
-        if self.get_luminosity() != self.luminosity:
+        if self.luminosity == " ":
+            luminosity = display.read_light_level()
+            if luminosity > 2:
+                self.luminosity = "Day"
+            else:
+                self.luminosity = "Night"
+        elif len(self.stage) == 5 and self.get_luminosity() != self.luminosity :
             if self.luminosity == "Day":
                 message = "Night"
                 self.radio_client.send_message("5", message)
@@ -124,30 +130,35 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
             elif self.luminosity == "Night":
                 message = "Day"
                 self.radio_client.send_message("5", message)
-                self.luminosity = "Night"        
-        self.stage.append(display.read_light_level())
+                self.luminosity = "Night"
         if len(self.stage) == 5:
-            self.luminosity_degree()
-
+            l = []
+            for j in range(1, len(self.stage)):
+                l.append(self.stage[i])
+            self.stage = l
+        self.stage.append(display.read_light_level())
+        
     def get_luminosity(self):
-        luminosity = display.read_light_level()
+        #luminosity = display.read_light_level()
         if self.luminosity_degree() > 1:
             return "Day"
         else:
             return "Night"
         
-    def luminosity_degree():
+    def luminosity_degree(self):
         sum = 0
         degree = 0
         for i in range(len(self.stage)):
             sum += self.stage[i]
         degree = sum / 5
-        l = []
-        for j in range(1, len(self.stage)):
-            l.append(self.stage[i])
-        self.stage = l
         return degree
-             
+    
+    def luminosity_react(self, react):
+        if react == "music":
+            music.play(music.POWER_UP)
+        elif react == "image":
+            display.show("Z") 
+    
     def run(self):
         while not self.radio_client.connect_to_parent():
             sleep(100)
