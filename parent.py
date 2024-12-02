@@ -1,5 +1,6 @@
 from common.micro_bit import Micro_Bit_Client
 import time
+import radio
 
 class Parent_Micro_Bit_Client(Micro_Bit_Client):
 
@@ -101,5 +102,48 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
 
         super().run()
 
-parent_micro_bit = Parent_Micro_Bit_Client()
-parent_micro_bit.run()
+    Initialiser le radio pour la communication
+    radio.on()
+    radio.config(channel=19)  # Choisir un canal pour la communication BLE
+    
+    Initialisation de la quantité de lait
+    quantite_lait = 0
+    
+    def envoyer_message(message):
+        """Envoie un message via le radio"""
+        radio.send(message)
+    
+    def afficher_quantite_lait():
+        """Affiche la quantité de lait sur l'écran LED"""
+        if quantite_lait == 0:
+            display.show(Image.NO)
+        else:
+            display.scroll(str(quantite_lait))
+    
+    while True:
+        if button_a.is_pressed():  # Ajout d'une dose de lait
+            quantite_lait += 1
+            envoyer_message("Dose de lait ajoutée")
+            sleep(500)
+    
+        if button_b.is_pressed():  # Suppression d'une dose erronée
+            if quantite_lait > 0:
+                quantite_lait -= 1
+                envoyer_message("Dose de lait supprimée")
+            sleep(500)
+    
+        if pin_logo.is_touched():  # Réinitialisation de la quantité de lait à zéro
+            quantite_lait = 0
+            envoyer_message("Quantité de lait réinitialisée")
+            sleep(500)
+    
+        # Affichage de la quantité de lait
+        afficher_quantite_lait()
+    
+    Affichage des informations reçues du be:bi' enfant
+        message_recu = radio.receive()
+        if message_recu:
+            display.scroll(message_recu)
+    
+    parent_micro_bit = Parent_Micro_Bit_Client()
+    parent_micro_bit.run()
