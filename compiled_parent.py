@@ -12,7 +12,12 @@ class Micro_Bit_Client:
     def add_received_task(self):
         message_type, message_data = self.radio_client.get_message()
 
-        if message_type and message_type != 1 and message_type in self.message_types:
+        cond = message_type and message_type != 1 and message_type in self.message_types
+        # if message_type:
+        #     display.show(str(message_type))
+        #     sleep(500)
+
+        if cond:
             func = self.message_types[message_type]
     
             if not message_data:
@@ -25,8 +30,8 @@ class Micro_Bit_Client:
             task()
 
     def update_stack(self):
-        self.add_received_task()
         self.check_tasks()
+        self.add_received_task()
 
     def update(self):
         self.update_stack()
@@ -35,18 +40,28 @@ class Micro_Bit_Client:
 
             if isinstance(self.stack[-1], tuple):
                 self.stack.pop(-1)
+                # display.scroll('executed')
+                # sleep(1000)
 
                 task[0](task[1])
 
             else:
+                # display.scroll('not tuple')
+                # sleep(500)
+
                 is_continue = task() # only menus can return True
                 if not is_continue:
                     self.stack.pop(-1)
                     display.clear()
 
+            sleep(500)
+
     def run(self):
         while True:
-            self.update()
+            try:
+                self.update()
+            except:
+                continue
 
 from microbit import *
 
@@ -137,7 +152,7 @@ class RadioClient:
         self.set_up_challenge(self.challenge)
     
 
-    def send_message(self, message_type, message_data):
+    def send_message(self, message_type, message_data=''):
         """
         Args:
             message_type - :str, represents message's type
@@ -228,6 +243,7 @@ class RadioClient:
 
 
 import time
+import radio
 
 class Parent_Micro_Bit_Client(Micro_Bit_Client):
 
@@ -245,19 +261,16 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
         super().__init__()
 
         self.curr_luminosity_option = 0
+        self.curr_mouvement_option = 0
+        self.curr_milk_option = 0
 
         self.message_types = {
-            5: self.handle_luminosity_change
+            3: self.handle_mouvement_change,
+            5: self.handle_luminosity_change,
+            7: self.show_milk_level,
         }
-    
-    def show_detected_mouvement(self):
-        pass
 
-    def handle_detected_mouvement(self):
-        """
-        changes the current state and 
-        """
-        pass
+        self.stack = [self.milk_menu]
     
     def handle_luminosity_change(self, luminosity):
         if luminosity == 'Day':
@@ -265,6 +278,8 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
 
         elif luminosity == 'Night':
             display.show(list(Image.ALL_CLOCKS[6:])+[Image.ALL_CLOCKS[0]])
+
+        sleep(1000)
 
         self.stack.append(self.luminosity_menu)
 
@@ -292,12 +307,97 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
             display.show(image)
 
         return True
+        
+    def handle_mouvement_change(self, mouvement):
+        #if mouvement == 'agité':
+        #    display.show(Image.SURPRISED)
+#
+        # if mouvement == 'très agité':
+        display.show(Image.ANGRY)
+        sleep(1000)
+        self.stack.append(self.mouvement_menu)
+    
+    def mouvement_menu(self):
+        if button_a.is_pressed():
+            task = 'image'
+            if self.curr_mouvement_option == 0: # music
+                task = 'music'
+            self.radio_client.send_message(4, task)
+
+            return False
+
+        elif button_b.is_pressed():
+            self.curr_mouvement_option += 1
+            self.curr_mouvement_option = self.curr_mouvement_option % 2
+
+        else:
+            if self.curr_mouvement_option == 0: # music
+                # image = Image.MUSIC
+                image = Image.MUSIC_QUAVER
+            else: # image
+                # image = Image.BUTTERFLY
+                image = Image.GHOST
+
+            display.show(image)
+
+        return True
 
     def run(self):
+        display.show('P')
+        sleep(1000)
+
         while not self.radio_client.connect_to_child():
             sleep(100)
 
         super().run()
 
+    def show_milk_level(self, milk_level):
+        display.scroll(str(milk_level))
+
+    def milk_menu(self):
+        """
+        4 options:
+        - increase milk level
+        - reduce milk level
+        - show milk level
+        - make milk level to 0
+        """
+
+        if button_a.is_pressed():
+            if self.curr_milk_option == 0: # milk level
+                task = '?'
+            elif self.curr_milk_option == 1: # increase 
+                task = '->'
+            elif self.curr_milk_option == 2: # reduce
+                task = '<-'
+            else:
+                task = '0'
+
+            self.radio_client.send_message(8, task)
+            # display.scroll("sent")
+            # sleep(300)
+
+        elif button_b.is_pressed():
+            self.curr_milk_option = (self.curr_milk_option+1) % 4
+            # display.scroll(str(self.curr_milk_option))
+            # sleep(300)
+
+        else:
+            if self.curr_milk_option == 0: # milk level
+                image = '?'
+
+            elif self.curr_milk_option == 1: # increase
+                image = Image.ARROW_N
+
+            elif self.curr_milk_option == 2: # reduce
+                image = Image.ARROW_S
+
+            elif self.curr_milk_option == 3: # 0
+                image = '=0'
+
+            display.show(image)
+
+        return True
+    
 parent_micro_bit = Parent_Micro_Bit_Client()
 parent_micro_bit.run()
