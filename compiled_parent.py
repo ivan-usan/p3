@@ -13,10 +13,6 @@ class Micro_Bit_Client:
     def add_received_task(self):
         message_type, message_data = self.radio_client.get_message()
 
-        # if message_type and message_type != 1:
-        #     display.show(message_type)
-        #     sleep(1000)
-
         if message_type and message_type != 1 and message_type in self.message_types:
             func = self.message_types[message_type]
     
@@ -36,11 +32,7 @@ class Micro_Bit_Client:
         self.add_received_task()
 
     def stack_append(self, message_type, data):
-        # display.scroll(str(message_type)+str(self.stack_indexes))
-        # sleep(2500)
-            
         if message_type in self.stack_indexes:
-            # display.scroll('skip'), sleep(1000)
             index = self.stack_indexes.index(message_type)
             self.stack_pop(index)
 
@@ -285,6 +277,9 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
         self.stack_indexes = [-1]
     
     def handle_luminosity_change(self, luminosity):
+        if self.stack_indexes[-1] == -2:
+            return
+
         if luminosity == 'Day':
             display.show(Image.ALL_CLOCKS[:7])
 
@@ -323,6 +318,9 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
         return True
         
     def handle_mouvement_change(self, mouvement):
+        if self.stack_indexes[-1] == -3:
+            return
+
         display.show([Image.ARROW_E, Image.ARROW_W])
         sleep(500)
 

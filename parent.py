@@ -31,6 +31,9 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
         self.stack_indexes = [-1]
     
     def handle_luminosity_change(self, luminosity):
+        if self.stack_indexes[-1] == -2:
+            return
+
         if luminosity == 'Day':
             display.show(Image.ALL_CLOCKS[:7])
 
@@ -69,6 +72,9 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
         return True
         
     def handle_mouvement_change(self, mouvement):
+        if self.stack_indexes[-1] == -3:
+            return
+
         display.show([Image.ARROW_E, Image.ARROW_W])
         sleep(500)
 

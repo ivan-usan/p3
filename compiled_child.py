@@ -13,10 +13,6 @@ class Micro_Bit_Client:
     def add_received_task(self):
         message_type, message_data = self.radio_client.get_message()
 
-        # if message_type and message_type != 1:
-        #     display.show(message_type)
-        #     sleep(1000)
-
         if message_type and message_type != 1 and message_type in self.message_types:
             func = self.message_types[message_type]
     
@@ -36,11 +32,7 @@ class Micro_Bit_Client:
         self.add_received_task()
 
     def stack_append(self, message_type, data):
-        # display.scroll(str(message_type)+str(self.stack_indexes))
-        # sleep(2500)
-            
         if message_type in self.stack_indexes:
-            # display.scroll('skip'), sleep(1000)
             index = self.stack_indexes.index(message_type)
             self.stack_pop(index)
 
@@ -269,13 +261,18 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         # Initialisation de l'état précédent du mouvement et du niveau de lait
         self.prev_mouvement = None
         self.milk_level = 0 # Quantité de lait initiale
+        self.curr_luminosity_option = 0
         self.stage = []
-        self.luminosity = " "
+        self.stage_len = 225
+
+        self.is_day_level_set_up = False
+        self.day_level = None
+
         # Liste des tâches à exécuter pour cet agent
 
         self.tasks = [self.check_luminosity, self.check_mouvement]
-        self.stack = [self.milk_menu, ]
-        self.stack_indexes = [-1, ]
+        self.stack = [self.milk_menu, self.set_up_luminosity_level, ]
+        self.stack_indexes = [-1, -2, ]
 
         self.message_types = {
             4: self.apply_mouvement_reaction,
@@ -329,7 +326,7 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         elif reaction == "image":
             display.show("Z")  # Image représentant le bébé en sommeil
 
-        sleep(500)
+        sleep(1000)
 
     # Fonctions liées à la gestion de la quantité de lait
     def show_milk_level(self):
@@ -337,7 +334,7 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         Affiche le niveau actuel de lait sur l'écran LED.
         """
         display.scroll(str(self.milk_level))
-        sleep(500)
+        sleep(1000)
 
     def milk_menu(self):
         """
@@ -355,12 +352,62 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         display.scroll(task)
         if task == '?':
             self.send_milk_level()
+
         elif task == '0':
             self.milk_level = 0
+
         elif task == '->':
             self.milk_level += 1
+
         elif task == '<-' and self.milk_level > 0:
             self.milk_level -= 1
+
+    def set_up_luminosity_level(self):
+        if not self.day_level:
+            self.day_level = display.read_light_level()
+
+            display.scroll("L%: "+str(self.day_level))
+            sleep(1000)
+
+        if button_a.is_pressed():
+            if self.curr_luminosity_option == 0: # luminosity level
+                self.is_day_level_set_up = True
+
+                return False
+
+            elif self.curr_luminosity_option == 1: # luminosity level
+                display.scroll(str(self.day_level))
+                sleep(1000)
+
+            elif self.curr_luminosity_option == 2: # increase 
+                self.day_level += 10
+
+            elif self.curr_luminosity_option == 3: # reduce
+                self.day_level -= 10
+
+            if self.curr_luminosity_option > 1:
+                display.show(['-', Image.ARROW_E])
+
+        elif button_b.is_pressed():
+            self.curr_luminosity_option = (self.curr_luminosity_option+1) % 4
+            sleep(500)
+
+        else:
+            if self.curr_luminosity_option == 0: # luminosity level
+                image = 'O'
+
+            elif self.curr_luminosity_option == 1: # increase
+                image = '?'
+
+            elif self.curr_luminosity_option == 2: # reduce
+                image = Image.ARROW_N
+
+            elif self.curr_luminosity_option == 3: # 0
+                image = Image.ARROW_S
+
+            display.show(image)
+
+        return True
 
     def send_milk_level(self):
         """
@@ -374,32 +421,35 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         """
         Vérifie si la luminosité de la pièce a changé et notifie le parent.
         """
-        if len(self.stage) < 5:
+        if len(self.stage) < self.stage_len:
             self.stage.append(display.read_light_level())
-            self.luminosity = self.get_luminosity()
+
+            if not self.is_day_level_set_up:
+                self.stage = self.stage[1:]
+
+            if len(self.stage) == self.stage_len:
+                self.luminosity = self.get_luminosity()
         else:
             self.stage = self.stage[1:]
             self.stage.append(display.read_light_level())
 
-        if len(self.stage) == 5:
+            # dipslay.scroll(str(self.luminosity_degree()))
+            # sleep(200)
+
             curr_luminosity = self.get_luminosity()
             if curr_luminosity != self.luminosity:
-
                 self.luminosity = curr_luminosity
                 self.radio_client.send_message(5, self.luminosity)
 
         
     def get_luminosity(self):
-        #luminosity = display.read_light_level()
-        # display.scroll(str(self.luminosity_degree()))
-        # sleep(800)
-        if self.luminosity_degree() > 75:
+        if self.luminosity_degree() > self.day_level:
             return "Day"
         else:
             return "Night"
         
     def luminosity_degree(self):
-        degree = sum(self.stage) / 5
+        degree = sum(self.stage) / self.stage_len
         return degree
     
     def luminosity_react(self, react):
@@ -408,7 +458,7 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         elif react == "image":
             display.show("Z") 
 
-        sleep(500)
+        sleep(1000)
  
     def run(self):
         display.show('E')
