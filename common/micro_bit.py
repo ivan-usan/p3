@@ -4,6 +4,7 @@ class Micro_Bit_Client:
 
     message_types = {}
     tasks = []
+    stack_indexes = []
 
     def __init__(self):
         self.stack = []
@@ -12,18 +13,19 @@ class Micro_Bit_Client:
     def add_received_task(self):
         message_type, message_data = self.radio_client.get_message()
 
-        cond = message_type and message_type != 1 and message_type in self.message_types
-        # if message_type:
-        #     display.show(str(message_type))
-        #     sleep(500)
+        # if message_type and message_type != 1:
+        #     display.show(message_type)
+        #     sleep(1000)
 
-        if cond:
+        if message_type and message_type != 1 and message_type in self.message_types:
             func = self.message_types[message_type]
     
             if not message_data:
-                self.stack.append(func)
+                data = func
             else:
-                self.stack.append((func, message_data))
+                data = (func, message_data)
+
+            self.stack_append(message_type, data)
 
     def check_tasks(self):
         for task in self.tasks:
@@ -33,28 +35,37 @@ class Micro_Bit_Client:
         self.check_tasks()
         self.add_received_task()
 
+    def stack_append(self, message_type, data):
+        # display.scroll(str(message_type)+str(self.stack_indexes))
+        # sleep(2500)
+            
+        if message_type in self.stack_indexes:
+            # display.scroll('skip'), sleep(1000)
+            index = self.stack_indexes.index(message_type)
+            self.stack_pop(index)
+
+        self.stack_indexes.append(message_type)
+        self.stack.append(data)
+
+    def stack_pop(self, index):
+        self.stack_indexes.pop(index)
+        self.stack.pop(index)
+
     def update(self):
         self.update_stack()
         if self.stack:
             task = self.stack[-1]
 
             if isinstance(self.stack[-1], tuple):
-                self.stack.pop(-1)
-                # display.scroll('executed')
-                # sleep(1000)
+                self.stack_pop(-1)
 
                 task[0](task[1])
 
             else:
-                # display.scroll('not tuple')
-                # sleep(500)
-
                 is_continue = task() # only menus can return True
                 if not is_continue:
-                    self.stack.pop(-1)
+                    self.stack_pop(-1)
                     display.clear()
-
-            sleep(500)
 
     def run(self):
         while True:

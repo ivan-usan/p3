@@ -4,6 +4,7 @@ class Micro_Bit_Client:
 
     message_types = {}
     tasks = []
+    stack_indexes = []
 
     def __init__(self):
         self.stack = []
@@ -12,18 +13,19 @@ class Micro_Bit_Client:
     def add_received_task(self):
         message_type, message_data = self.radio_client.get_message()
 
-        cond = message_type and message_type != 1 and message_type in self.message_types
-        # if message_type:
-        #     display.show(str(message_type))
-        #     sleep(500)
+        # if message_type and message_type != 1:
+        #     display.show(message_type)
+        #     sleep(1000)
 
-        if cond:
+        if message_type and message_type != 1 and message_type in self.message_types:
             func = self.message_types[message_type]
     
             if not message_data:
-                self.stack.append(func)
+                data = func
             else:
-                self.stack.append((func, message_data))
+                data = (func, message_data)
+
+            self.stack_append(message_type, data)
 
     def check_tasks(self):
         for task in self.tasks:
@@ -33,28 +35,37 @@ class Micro_Bit_Client:
         self.check_tasks()
         self.add_received_task()
 
+    def stack_append(self, message_type, data):
+        # display.scroll(str(message_type)+str(self.stack_indexes))
+        # sleep(2500)
+            
+        if message_type in self.stack_indexes:
+            # display.scroll('skip'), sleep(1000)
+            index = self.stack_indexes.index(message_type)
+            self.stack_pop(index)
+
+        self.stack_indexes.append(message_type)
+        self.stack.append(data)
+
+    def stack_pop(self, index):
+        self.stack_indexes.pop(index)
+        self.stack.pop(index)
+
     def update(self):
         self.update_stack()
         if self.stack:
             task = self.stack[-1]
 
             if isinstance(self.stack[-1], tuple):
-                self.stack.pop(-1)
-                # display.scroll('executed')
-                # sleep(1000)
+                self.stack_pop(-1)
 
                 task[0](task[1])
 
             else:
-                # display.scroll('not tuple')
-                # sleep(500)
-
                 is_continue = task() # only menus can return True
                 if not is_continue:
-                    self.stack.pop(-1)
+                    self.stack_pop(-1)
                     display.clear()
-
-            sleep(500)
 
     def run(self):
         while True:
@@ -264,6 +275,7 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
 
         self.tasks = [self.check_luminosity, self.check_mouvement]
         self.stack = [self.milk_menu, ]
+        self.stack_indexes = [-1, ]
 
         self.message_types = {
             4: self.apply_mouvement_reaction,
@@ -281,10 +293,10 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         z = accelerometer.get_z()
         
         distance = math.sqrt((x)**2+(y)**2+(z)**2)
-        if distance >= 2000:
+        if distance >= 2500:
             return "très agité"
     
-        elif distance < 2000 and distance >= 700 :
+        elif distance < 2500 and distance >= 700 :
             return "agité"
         
         else : 
@@ -312,21 +324,20 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         Applique une réaction au mouvement : musique ou image.
         """
         # display.show('application')
-        display.show(reaction)
         if reaction == "music":
             music.play(music.POWER_UP)
         elif reaction == "image":
             display.show("Z")  # Image représentant le bébé en sommeil
 
-        sleep(1000)
+        sleep(500)
 
     # Fonctions liées à la gestion de la quantité de lait
     def show_milk_level(self):
         """
         Affiche le niveau actuel de lait sur l'écran LED.
         """
-        display.show(str(self.milk_level))
-        sleep(1000)
+        display.scroll(str(self.milk_level))
+        sleep(500)
 
     def milk_menu(self):
         """
@@ -341,6 +352,7 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         return True
 
     def milk_menu_react(self, task):
+        display.scroll(task)
         if task == '?':
             self.send_milk_level()
         elif task == '0':
@@ -362,28 +374,26 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         """
         Vérifie si la luminosité de la pièce a changé et notifie le parent.
         """
+        if len(self.stage) < 5:
+            self.stage.append(display.read_light_level())
+            self.luminosity = self.get_luminosity()
+        else:
+            self.stage = self.stage[1:]
+            self.stage.append(display.read_light_level())
 
-        if self.luminosity == " ":
-            luminosity = display.read_light_level()
-            if luminosity > 25:
-                self.luminosity = "Day"
-            else:
-                self.luminosity = "Night"
-
-        elif len(self.stage) == 5:
+        if len(self.stage) == 5:
             curr_luminosity = self.get_luminosity()
             if curr_luminosity != self.luminosity:
 
                 self.luminosity = curr_luminosity
                 self.radio_client.send_message(5, self.luminosity)
 
-            self.stage = self.stage[1:]
-
-        self.stage.append(display.read_light_level())
         
     def get_luminosity(self):
         #luminosity = display.read_light_level()
-        if self.luminosity_degree() > 25:
+        # display.scroll(str(self.luminosity_degree()))
+        # sleep(800)
+        if self.luminosity_degree() > 75:
             return "Day"
         else:
             return "Night"
@@ -398,7 +408,7 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         elif react == "image":
             display.show("Z") 
 
-        sleep(1000)
+        sleep(500)
  
     def run(self):
         display.show('E')

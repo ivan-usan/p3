@@ -4,6 +4,7 @@ class Micro_Bit_Client:
 
     message_types = {}
     tasks = []
+    stack_indexes = []
 
     def __init__(self):
         self.stack = []
@@ -12,18 +13,19 @@ class Micro_Bit_Client:
     def add_received_task(self):
         message_type, message_data = self.radio_client.get_message()
 
-        cond = message_type and message_type != 1 and message_type in self.message_types
-        # if message_type:
-        #     display.show(str(message_type))
-        #     sleep(500)
+        # if message_type and message_type != 1:
+        #     display.show(message_type)
+        #     sleep(1000)
 
-        if cond:
+        if message_type and message_type != 1 and message_type in self.message_types:
             func = self.message_types[message_type]
     
             if not message_data:
-                self.stack.append(func)
+                data = func
             else:
-                self.stack.append((func, message_data))
+                data = (func, message_data)
+
+            self.stack_append(message_type, data)
 
     def check_tasks(self):
         for task in self.tasks:
@@ -33,28 +35,37 @@ class Micro_Bit_Client:
         self.check_tasks()
         self.add_received_task()
 
+    def stack_append(self, message_type, data):
+        # display.scroll(str(message_type)+str(self.stack_indexes))
+        # sleep(2500)
+            
+        if message_type in self.stack_indexes:
+            # display.scroll('skip'), sleep(1000)
+            index = self.stack_indexes.index(message_type)
+            self.stack_pop(index)
+
+        self.stack_indexes.append(message_type)
+        self.stack.append(data)
+
+    def stack_pop(self, index):
+        self.stack_indexes.pop(index)
+        self.stack.pop(index)
+
     def update(self):
         self.update_stack()
         if self.stack:
             task = self.stack[-1]
 
             if isinstance(self.stack[-1], tuple):
-                self.stack.pop(-1)
-                # display.scroll('executed')
-                # sleep(1000)
+                self.stack_pop(-1)
 
                 task[0](task[1])
 
             else:
-                # display.scroll('not tuple')
-                # sleep(500)
-
                 is_continue = task() # only menus can return True
                 if not is_continue:
-                    self.stack.pop(-1)
+                    self.stack_pop(-1)
                     display.clear()
-
-            sleep(500)
 
     def run(self):
         while True:
@@ -271,6 +282,7 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
         }
 
         self.stack = [self.milk_menu]
+        self.stack_indexes = [-1]
     
     def handle_luminosity_change(self, luminosity):
         if luminosity == 'Day':
@@ -281,7 +293,7 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
 
         sleep(1000)
 
-        self.stack.append(self.luminosity_menu)
+        self.stack_append(-2, self.luminosity_menu)
 
     def luminosity_menu(self):
         if button_a.is_pressed():
@@ -291,12 +303,14 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
                 task = 'image'
 
             self.radio_client.send_message(6, task)
+            display.show(['-', Image.ARROW_E])
 
             return False
 
         elif button_b.is_pressed():
             self.curr_luminosity_option += 1
             self.curr_luminosity_option = self.curr_luminosity_option % 2
+            sleep(500)
 
         else:
             if self.curr_luminosity_option == 0: # music
@@ -309,13 +323,10 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
         return True
         
     def handle_mouvement_change(self, mouvement):
-        #if mouvement == 'agité':
-        #    display.show(Image.SURPRISED)
-#
-        # if mouvement == 'très agité':
-        display.show(Image.ANGRY)
-        sleep(1000)
-        self.stack.append(self.mouvement_menu)
+        display.show([Image.ARROW_E, Image.ARROW_W])
+        sleep(500)
+
+        self.stack_append(-3, self.mouvement_menu)
     
     def mouvement_menu(self):
         if button_a.is_pressed():
@@ -323,12 +334,14 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
             if self.curr_mouvement_option == 0: # music
                 task = 'music'
             self.radio_client.send_message(4, task)
+            display.show(['-', Image.ARROW_E])
 
             return False
 
         elif button_b.is_pressed():
             self.curr_mouvement_option += 1
             self.curr_mouvement_option = self.curr_mouvement_option % 2
+            sleep(500)
 
         else:
             if self.curr_mouvement_option == 0: # music
@@ -374,13 +387,12 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
                 task = '0'
 
             self.radio_client.send_message(8, task)
-            # display.scroll("sent")
-            # sleep(300)
+            display.show(['-', Image.ARROW_E])
+            self.curr_milk_option = 0
 
         elif button_b.is_pressed():
             self.curr_milk_option = (self.curr_milk_option+1) % 4
-            # display.scroll(str(self.curr_milk_option))
-            # sleep(300)
+            sleep(500)
 
         else:
             if self.curr_milk_option == 0: # milk level

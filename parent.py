@@ -28,6 +28,7 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
         }
 
         self.stack = [self.milk_menu]
+        self.stack_indexes = [-1]
     
     def handle_luminosity_change(self, luminosity):
         if luminosity == 'Day':
@@ -38,7 +39,7 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
 
         sleep(1000)
 
-        self.stack.append(self.luminosity_menu)
+        self.stack_append(-2, self.luminosity_menu)
 
     def luminosity_menu(self):
         if button_a.is_pressed():
@@ -48,12 +49,14 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
                 task = 'image'
 
             self.radio_client.send_message(6, task)
+            display.show(['-', Image.ARROW_E])
 
             return False
 
         elif button_b.is_pressed():
             self.curr_luminosity_option += 1
             self.curr_luminosity_option = self.curr_luminosity_option % 2
+            sleep(500)
 
         else:
             if self.curr_luminosity_option == 0: # music
@@ -66,13 +69,10 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
         return True
         
     def handle_mouvement_change(self, mouvement):
-        #if mouvement == 'agité':
-        #    display.show(Image.SURPRISED)
-#
-        # if mouvement == 'très agité':
-        display.show(Image.ANGRY)
-        sleep(1000)
-        self.stack.append(self.mouvement_menu)
+        display.show([Image.ARROW_E, Image.ARROW_W])
+        sleep(500)
+
+        self.stack_append(-3, self.mouvement_menu)
     
     def mouvement_menu(self):
         if button_a.is_pressed():
@@ -80,12 +80,14 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
             if self.curr_mouvement_option == 0: # music
                 task = 'music'
             self.radio_client.send_message(4, task)
+            display.show(['-', Image.ARROW_E])
 
             return False
 
         elif button_b.is_pressed():
             self.curr_mouvement_option += 1
             self.curr_mouvement_option = self.curr_mouvement_option % 2
+            sleep(500)
 
         else:
             if self.curr_mouvement_option == 0: # music
@@ -131,13 +133,12 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
                 task = '0'
 
             self.radio_client.send_message(8, task)
-            # display.scroll("sent")
-            # sleep(300)
+            display.show(['-', Image.ARROW_E])
+            self.curr_milk_option = 0
 
         elif button_b.is_pressed():
             self.curr_milk_option = (self.curr_milk_option+1) % 4
-            # display.scroll(str(self.curr_milk_option))
-            # sleep(300)
+            sleep(500)
 
         else:
             if self.curr_milk_option == 0: # milk level

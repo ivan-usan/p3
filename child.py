@@ -21,6 +21,7 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
 
         self.tasks = [self.check_luminosity, self.check_mouvement]
         self.stack = [self.milk_menu, ]
+        self.stack_indexes = [-1, ]
 
         self.message_types = {
             4: self.apply_mouvement_reaction,
@@ -38,10 +39,10 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         z = accelerometer.get_z()
         
         distance = math.sqrt((x)**2+(y)**2+(z)**2)
-        if distance >= 2000:
+        if distance >= 2500:
             return "très agité"
     
-        elif distance < 2000 and distance >= 700 :
+        elif distance < 2500 and distance >= 700 :
             return "agité"
         
         else : 
@@ -74,15 +75,15 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         elif reaction == "image":
             display.show("Z")  # Image représentant le bébé en sommeil
 
-        sleep(1000)
+        sleep(500)
 
     # Fonctions liées à la gestion de la quantité de lait
     def show_milk_level(self):
         """
         Affiche le niveau actuel de lait sur l'écran LED.
         """
-        display.show(str(self.milk_level))
-        sleep(1000)
+        display.scroll(str(self.milk_level))
+        sleep(500)
 
     def milk_menu(self):
         """
@@ -97,6 +98,7 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         return True
 
     def milk_menu_react(self, task):
+        display.scroll(task)
         if task == '?':
             self.send_milk_level()
         elif task == '0':
@@ -118,28 +120,26 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         """
         Vérifie si la luminosité de la pièce a changé et notifie le parent.
         """
+        if len(self.stage) < 5:
+            self.stage.append(display.read_light_level())
+            self.luminosity = self.get_luminosity()
+        else:
+            self.stage = self.stage[1:]
+            self.stage.append(display.read_light_level())
 
-        if self.luminosity == " ":
-            luminosity = display.read_light_level()
-            if luminosity > 25:
-                self.luminosity = "Day"
-            else:
-                self.luminosity = "Night"
-
-        elif len(self.stage) == 5:
+        if len(self.stage) == 5:
             curr_luminosity = self.get_luminosity()
             if curr_luminosity != self.luminosity:
 
                 self.luminosity = curr_luminosity
                 self.radio_client.send_message(5, self.luminosity)
 
-            self.stage = self.stage[1:]
-
-        self.stage.append(display.read_light_level())
         
     def get_luminosity(self):
         #luminosity = display.read_light_level()
-        if self.luminosity_degree() > 25:
+        # display.scroll(str(self.luminosity_degree()))
+        # sleep(800)
+        if self.luminosity_degree() > 75:
             return "Day"
         else:
             return "Night"
@@ -154,7 +154,7 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         elif react == "image":
             display.show("Z") 
 
-        sleep(1000)
+        sleep(500)
  
     def run(self):
         display.show('E')
