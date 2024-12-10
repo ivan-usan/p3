@@ -115,7 +115,7 @@ class RadioClient:
     
             message_type, message_length, message_data = message.split('|')
             message_data = vigenere(message_data, self.password, decryption=True)
-    
+
             nonce, message_data = message_data.split(':')
     
             if nonce in self.nonce_set:

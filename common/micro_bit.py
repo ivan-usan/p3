@@ -1,4 +1,5 @@
 from common.communication import RadioClient
+import gc
 
 class Micro_Bit_Client:
 
@@ -43,6 +44,7 @@ class Micro_Bit_Client:
         self.stack_indexes.pop(index)
         self.stack.pop(index)
 
+    i = 0
     def update(self):
         self.update_stack()
         if self.stack:
@@ -58,6 +60,8 @@ class Micro_Bit_Client:
                 if not is_continue:
                     self.stack_pop(-1)
                     display.clear()
+
+        sleep(5)
 
     def run(self):
         while True:

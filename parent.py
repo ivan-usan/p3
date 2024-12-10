@@ -112,7 +112,7 @@ class Parent_Micro_Bit_Client(Micro_Bit_Client):
         sleep(1000)
 
         while not self.radio_client.connect_to_child():
-            sleep(100)
+            pass
 
         super().run()
 

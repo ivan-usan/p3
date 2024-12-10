@@ -19,6 +19,8 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         self.stage = []
         self.stage_len = 225
 
+        self.check_lst = []
+
         self.is_day_level_set_up = False
         self.day_level = None
 
@@ -74,7 +76,6 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         """
         Applique une réaction au mouvement : musique ou image.
         """
-        # display.show('application')
         if reaction == "music":
             music.play(music.POWER_UP)
         elif reaction == "image":
@@ -175,6 +176,11 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         """
         Vérifie si la luminosité de la pièce a changé et notifie le parent.
         """
+
+#        if len(self.stage) > self.stage_len:
+#            display.scroll('hell')
+#            sleep(2500)
+
         if len(self.stage) < self.stage_len:
             self.stage.append(display.read_light_level())
 
@@ -186,9 +192,6 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         else:
             self.stage = self.stage[1:]
             self.stage.append(display.read_light_level())
-
-            # dipslay.scroll(str(self.luminosity_degree()))
-            # sleep(200)
 
             curr_luminosity = self.get_luminosity()
             if curr_luminosity != self.luminosity:
@@ -219,7 +222,7 @@ class Child_Micro_Bit_Client(Micro_Bit_Client):
         sleep(1000)
 
         while not self.radio_client.connect_to_parent():
-            sleep(100)
+            pass
 
         super().run()
     
